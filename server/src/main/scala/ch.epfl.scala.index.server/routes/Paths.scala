@@ -31,7 +31,7 @@ class Paths(userState: Directive1[Option[UserState]]) {
         apiRoutes(
           (apiPrefix & cors() & path("search") & get & parameters(('q, 'target, 'scalaVersion, 'scalaJsVersion.?, 'cli.as[Boolean] ? false))) (behavior.projectSearchApi),
           (apiPrefix & cors() & path("project") & get & parameters(('organization, 'repository, 'artifact.?))) (behavior.releaseInfoApi),
-          (apiPrefix & path("autocomplete") & get & parameter('q)) (behavior.autocomplete)
+          (apiPrefix & cors() & path("autocomplete") & get & parameter('q)) (behavior.autocomplete)
         ),
         Assets.routes,
         badgeRoutes(
