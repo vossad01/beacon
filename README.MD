@@ -1,11 +1,8 @@
-# Scaladex
-
-[![Travis](https://img.shields.io/travis/scalacenter/scaladex.svg?style=flat-square)](https://travis-ci.org/scalacenter/scaladex)
-[![Gitter](https://img.shields.io/gitter/room/scalacenter/scaladex.svg?style=flat-square)](https://gitter.im/scalacenter/scaladex)
+# Beacon
 
 ## How it works
 
-We pull poms from Bintray and we receive poms from Maven Central or to Scaladex directly.
+We pull poms from Bintray and we receive poms from Maven Central or Scaladex.
 Your library has to be published to one of those repositories.
 
 * [`How to publish on Bintray`](/doc/user/publish-bintray.md)

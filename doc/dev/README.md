@@ -4,7 +4,7 @@
 * sbt
 * css compiler [`sass`](http://sass-lang.com/install)
 
-## How to run Scaladex locally:
+## How to run Beacon locally:
 
 ```bash
 git clone https://github.com/scalacenter/scaladex.git

@@ -5,12 +5,12 @@
 // Colors
 //------------------------------------------------------------------------------
 
-$brand-primary: rgb(242, 101, 39);
-$gray-darker: rgb(0, 43, 55);
-$gray-dark: rgb(34, 73, 81);
-$gray: rgb(88, 110, 117);
-$gray-light: rgb(125, 147, 154);
-$gray-lighter: rgb(237, 241, 241);
+$brand-primary: rgb(255, 140, 0);
+$gray-dark: darken(rgb(0, 0, 255), 25%);
+$gray-darker: darken($gray-dark, 10%);
+$gray: rgb(88, 110, 150);
+$gray-light: lighten($gray, 25%);
+$gray-lighter: lighten($gray, 50%);
 
 
 // Scaffolding
