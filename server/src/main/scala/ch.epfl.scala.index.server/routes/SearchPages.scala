@@ -4,7 +4,6 @@ package routes
 
 import views.search.html._
 
-import model.release.ScalaTarget
 import model.misc.SearchParams
 
 import TwirlSupport._
@@ -25,14 +24,11 @@ class SearchPages(dataRepository: DataRepository, session: GithubUserSession) {
       for {
         (pagination, projects) <- find(params)
         keywords <- keywords(params)
-        targets <- targets(params)
+        targetTypes <- targetTypes(params)
+        scalaVersions <- scalaVersions(params)
+        scalaJsVersions <- scalaJsVersions(params)
+        scalaNativeVersions <- scalaNativeVersions(params)
       } yield {
-
-        val parsedTargets =
-          targets.toList.map{case (name, count) =>
-            ScalaTarget.fromSupportName(name).map{ case (label, version) => (label, version, count, name)}
-          }.flatten.sorted
-
         searchresult(
           params,
           uri,
@@ -41,25 +37,47 @@ class SearchPages(dataRepository: DataRepository, session: GithubUserSession) {
           user.map(_.user),
           params.userRepos.nonEmpty,
           keywords,
-          parsedTargets
+          targetTypes,
+          scalaVersions,
+          scalaJsVersions,
+          scalaNativeVersions
         )
       }
     )
   }
 
   def searchParams(user: Option[UserState]): Directive1[SearchParams] =
-    parameters(('q ? "*", 'page.as[Int] ? 1, 'sort.?, 'keywords.*, 'targets.*, 'you.?)).tmap{
-          case ( q      ,  page            ,  sort  ,  keywords  ,  targets  ,  you) =>
-
-      val userRepos = you.flatMap(_ => user.map(_.repos)).getOrElse(Set())
-      SearchParams(
-        q,
-        page,
-        sort,
-        userRepos,
-        keywords = keywords.toList,
-        targets  = targets.toList
-      )
+    parameters(
+      ('q ? "*",
+       'page.as[Int] ? 1,
+       'sort.?,
+       'keywords.*,
+       'targetTypes.*,
+       'scalaVersions.*,
+       'scalaJsVersions.*,
+       'scalaNativeVersions.*,
+       'you.?)).tmap {
+      case (q,
+            page,
+            sort,
+            keywords,
+            targetTypes,
+            scalaVersions,
+            scalaJsVersions,
+            scalaNativeVersions,
+            you) =>
+        val userRepos = you.flatMap(_ => user.map(_.repos)).getOrElse(Set())
+        SearchParams(
+          q,
+          page,
+          sort,
+          userRepos,
+          keywords = keywords.toList,
+          targetTypes = targetTypes.toList,
+          scalaVersions = scalaVersions.toList,
+          scalaJsVersions = scalaJsVersions.toList,
+          scalaNativeVersions = scalaNativeVersions.toList
+        )
     }
 
   private val searchPath = "search"

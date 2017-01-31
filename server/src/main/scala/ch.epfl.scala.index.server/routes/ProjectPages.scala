@@ -14,11 +14,9 @@ import server.Directives._
 import Uri._
 import StatusCodes._
 
-import scala.collection.immutable.Seq
 import scala.concurrent.Future
 
 class ProjectPages(dataRepository: DataRepository, session: GithubUserSession) {
-
   import session._
 
   private def canEdit(owner: String, repo: String, userState: Option[UserState]) =
@@ -32,7 +30,7 @@ class ProjectPages(dataRepository: DataRepository, session: GithubUserSession) {
         project <- dataRepository.project(Project.Reference(owner, repo))
       } yield {
         project.map { p =>
-          val allKeywords = (p.keywords ++ keywords.keys.toSet).toList.sorted
+          val allKeywords = (p.keywords ++ keywords.map(_._1).toSet).toList.sorted
           (OK, views.project.html.editproject(p, allKeywords, user))
         }.getOrElse((NotFound, views.html.notfound(user)))
       }
@@ -41,29 +39,35 @@ class ProjectPages(dataRepository: DataRepository, session: GithubUserSession) {
 
   private def projectPage(owner: String,
                           repo: String,
+                          target: Option[String],
                           artifact: Option[String],
-                          version: Option[SemanticVersion],
+                          version: Option[String],
                           userState: Option[UserState]) = {
 
     val user = userState.map(_.user)
 
-    println(s"$owner $repo $artifact $version")
+    val selection = ReleaseSelection.parse(
+      target = target,
+      artifactName = artifact,
+      version = version
+    )
 
     dataRepository
-      .projectPage(Project.Reference(owner, repo), ReleaseSelection(artifact, version))
+      .projectPage(Project.Reference(owner, repo), selection)
       .map(_.map {
         case (project, options) =>
           import options._
-        (OK,
-          views.project.html.project(
-            project,
-            artifacts,
-            versions,
-            targets,
-            release,
-            user,
-            canEdit(owner, repo, userState)
-          ))
+
+          (OK,
+           views.project.html.project(
+             project,
+             options.artifacts,
+             versions,
+             targets,
+             release,
+             user,
+             canEdit(owner, repo, userState)
+           ))
       }.getOrElse((NotFound, views.html.notfound(user))))
   }
 
@@ -112,31 +116,54 @@ class ProjectPages(dataRepository: DataRepository, session: GithubUserSession) {
     documentationLinks
   }
 
-  def legacyArtifactQueryBehavior(organization: String, repository: String, artifact: String, version: Option[String]) = {
-    val rest = version match {
-      case Some(v) if !v.isEmpty => "/" + v
+  def legacyArtifactQueryBehavior(organization: String, repository: String, artifact: Option[String], version: Option[String], target: Option[String], user: Option[UserState]) = {
+    val rest = (artifact, version) match {
+      case (Some(a), Some(v)) => s"$a/$v"
+      case (Some(a), None) => a
       case _ => ""
     }
-    redirect(s"/$organization/$repository/$artifact$rest",
-      StatusCodes.PermanentRedirect)
+    val targetQuery = target match {
+      case Some(t) => s"?target=$t"
+      case _ => ""
+    }
+    if (artifact.isEmpty && version.isEmpty) {
+      complete(
+        projectPage(organization, repository, target, None, None, user))
+    } else {
+      redirect(s"/$organization/$repository/$rest$targetQuery",
+        StatusCodes.PermanentRedirect)
+    }
   }
 
-  def projectPageBehavior(organization: String, repository: String, user: Option[UserState]) = {
-    complete(projectPage(organization, repository, None, None, user))
-  }
-
-  def artifactPageBehavior(organization: String, repository: String, artifact: String, user: Option[UserState]) = {
-    complete(
-      projectPage(organization, repository, Some(artifact), None, user)
-    )
-  }
-
-  def artifactWithVersionBehavior(organization: String, repository: String, artifact: String, version: String, user: Option[UserState]) = {
+  def projectPageBehavior(organization: String, repository: String, user: Option[UserState], target: Option[String]) = {
     complete(
       projectPage(organization,
         repository,
+        target,
+        None,
+        None,
+        user)
+    )
+  }
+
+  def artifactPageBehavior(organization: String, repository: String, artifact: String, user: Option[UserState], target: Option[String]) = {
+    complete(
+      projectPage(organization,
+        repository,
+        target,
         Some(artifact),
-        SemanticVersion(version),
+        None,
+        user)
+    )
+  }
+
+  def artifactWithVersionBehavior(organization: String, repository: String, artifact: String, version: String, user: Option[UserState], target: Option[String]) = {
+    complete(
+      projectPage(organization,
+        repository,
+        target,
+        Some(artifact),
+        Some(version),
         user)
     )
   }

@@ -4,36 +4,59 @@ package routes
 package api
 
 import ch.epfl.scala.index.api.Autocompletion
+
 import model.misc.SearchParams
-import model._
-import release._
+import model._, release._
+
 import akka.http.scaladsl._
 import server.Directives._
 import model.StatusCodes._
+
 import upickle.default._
 
 import scala.concurrent.ExecutionContext
 
 object Api {
-
   case class Project(
-                      organization: String,
-                      repository: String,
-                      logo: Option[String] = None,
-                      artifacts: List[String] = Nil
-                    )
+      organization: String,
+      repository: String,
+      logo: Option[String] = None,
+      artifacts: List[String] = Nil
+  )
 
   case class ReleaseOptions(
-                             artifacts: List[String],
-                             versions: List[String],
-                             groupId: String,
-                             artifactId: String,
-                             version: String
-                           )
-
+      artifacts: List[String],
+      versions: List[String],
+      groupId: String,
+      artifactId: String,
+      version: String
+  )
 }
 
 class SearchApi(dataRepository: DataRepository)(implicit val executionContext: ExecutionContext) {
+
+  private def parseScalaTarget(targetType: Option[String],
+                               scalaVersion: Option[String],
+                               scalaJsVersion: Option[String],
+                               scalaNativeVersion: Option[String]): Option[ScalaTarget] = {
+    (targetType,
+     scalaVersion.flatMap(SemanticVersion.parse),
+     scalaJsVersion.flatMap(SemanticVersion.parse),
+     scalaNativeVersion.flatMap(SemanticVersion.parse)) match {
+
+      case (Some("JVM"), Some(scalaVersion), _, _) =>
+        Some(ScalaTarget.scala(scalaVersion))
+
+      case (Some("JS"), Some(scalaVersion), Some(scalaJsVersion), _) =>
+        Some(ScalaTarget.scalaJs(scalaVersion, scalaJsVersion))
+
+      case (Some("NATIVE"), Some(scalaVersion), _, Some(scalaNativeVersion)) =>
+        Some(ScalaTarget.scalaNative(scalaVersion, scalaNativeVersion))
+
+      case _ =>
+        None
+    }
+  }
 
   def autocompleteBehavior(query: String) = {
     complete {
@@ -51,8 +74,17 @@ class SearchApi(dataRepository: DataRepository)(implicit val executionContext: E
     }
   }
 
-  def projectBehavior(organization: String, repository: String, artifact: Option[String]) = {
+  def projectBehavior(organization: String, repository: String, targetType: Option[String], scalaVersion: Option[String], scalaJsVersion: Option[String], scalaNativeVersion: Option[String], artifact: Option[String]) = {
     val reference = Project.Reference(organization, repository)
+
+    val scalaTarget =
+      parseScalaTarget(targetType, scalaVersion, scalaJsVersion, scalaNativeVersion)
+
+    val selection = new ReleaseSelection(
+      target = scalaTarget,
+      artifact = artifact,
+      version = None
+    )
 
     def convert(options: ReleaseOptions): Api.ReleaseOptions = {
       import options._
@@ -65,24 +97,18 @@ class SearchApi(dataRepository: DataRepository)(implicit val executionContext: E
       )
     }
 
-    complete(
-      dataRepository.projectPage(reference, ReleaseSelection(artifact, None)).map {
-        case Some((_, options)) => (OK, write(convert(options)))
-        case None => (NotFound, "")
-      })
+    complete(dataRepository.projectPage(reference, selection).map {
+      case Some((_, options)) => (OK, write(convert(options)))
+      case None => (NotFound, "")
+    })
   }
 
-  def searchBehavior(q: String, target0: String, scalaVersion0: String, targetVersion0: Option[String], cli: Boolean) = {
-    val target1 =
-      (target0, SemanticVersion(scalaVersion0), targetVersion0.map(SemanticVersion(_))) match {
-        case ("JVM", Some(scalaVersion), _) =>
-          Some(ScalaTarget(scalaVersion))
-        case ("JS", Some(scalaVersion), Some(scalaJsVersion)) =>
-          Some(ScalaTarget(scalaVersion, scalaJsVersion))
-        // NATIVE
-        case _ =>
-          None
-      }
+  def searchBehavior(q: String, targetType: String, scalaVersion: String, scalaJsVersion: Option[String], scalaNativeVersion: Option[String], cli: Boolean) = {
+    val scalaTarget =
+      parseScalaTarget(Some(targetType),
+        Some(scalaVersion),
+        scalaJsVersion,
+        scalaNativeVersion)
 
     def convert(project: Project): Api.Project = {
       import project._
@@ -98,15 +124,15 @@ class SearchApi(dataRepository: DataRepository)(implicit val executionContext: E
     }
 
     complete(
-      target1 match {
+      scalaTarget match {
         case Some(target) =>
           (OK,
             dataRepository
-              .find(SearchParams(queryString = q, targetFiltering = target1, cli = cli, total = 10))
+              .find(SearchParams(queryString = q, targetFiltering = scalaTarget, cli = cli, total = 10))
               .map { case (_, ps) => ps.map(p => convert(p)) }
               .map(ps => write(ps)))
         case None =>
-          (BadRequest, s"something is wrong: $target0 $scalaVersion0 $targetVersion0")
+          (BadRequest, s"something is wrong: $targetType $scalaVersion $scalaJsVersion")
       }
     )
   }

@@ -42,10 +42,17 @@ class Badges(dataRepository: DataRepository) {
 
   }
 
-  def versionBadgeBehavior(organization: String, repository: String, artifact: String, color: Option[String], style: Option[String], logo: Option[String], logoWidth: Option[Int]) = {
+  def versionBadgeBehavior(organization: String, repository: String, artifact: String, target: Option[String], color: Option[String], style: Option[String], logo: Option[String], logoWidth: Option[Int]) = {
     onSuccess(
-      dataRepository.projectPage(Project.Reference(organization, repository),
-        ReleaseSelection(Some(artifact), None))) {
+      dataRepository.projectPage(
+        Project.Reference(organization, repository),
+        ReleaseSelection.parse(
+          target = target,
+          artifactName = Some(artifact),
+          version = None
+        )
+      )
+    ) {
 
       case Some((_, options)) =>
         shieldsSvg(artifact,

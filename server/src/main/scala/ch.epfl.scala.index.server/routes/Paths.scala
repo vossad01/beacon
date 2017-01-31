@@ -29,13 +29,13 @@ class Paths(userState: Directive1[Option[UserState]]) {
           (put & publish & publishParameters & entity(as[String]) & extractCredentials.flatMap(behavior.credentialsTransformation)) (behavior.publishRelease)
         ),
         apiRoutes(
-          (apiPrefix & cors() & path("search") & get & parameters(('q, 'target, 'scalaVersion, 'scalaJsVersion.?, 'cli.as[Boolean] ? false))) (behavior.projectSearchApi),
-          (apiPrefix & cors() & path("project") & get & parameters(('organization, 'repository, 'artifact.?))) (behavior.releaseInfoApi),
+          (apiPrefix & cors() & path("search") & get & parameters(('q, 'target, 'scalaVersion, 'scalaJsVersion.?, 'scalaNativeVersion.?, 'cli.as[Boolean] ? false))) (behavior.projectSearchApi),
+          (apiPrefix & cors() & path("project") & get & parameters(('organization, 'repository, 'target.?, 'scalaVersion.?, 'scalaJsVersion.?, 'scalaNativeVersion.?, 'artifact.?))) (behavior.releaseInfoApi),
           (apiPrefix & cors() & path("autocomplete") & get & parameter('q)) (behavior.autocomplete)
         ),
         Assets.routes,
         badgeRoutes(
-          (get & path(Segment / Segment / Segment / "latest.svg") & shieldsParameters) (behavior.versionBadge),
+          (get & path(Segment / Segment / Segment / "latest.svg") & parameter('target.?) & shieldsParameters) (behavior.versionBadge),
           (get & path("count.svg") & parameter('q) & shieldsParameters & parameters('subject)) (behavior.countBadge)
         ),
         behavior.oAuth2routes
@@ -49,12 +49,12 @@ class Paths(userState: Directive1[Option[UserState]]) {
             projectRoutes(
               (post & path("edit" / Segment / Segment) & userState & pathEnd & formFieldSeq & editFormFields) (behavior.updateProject),
               (get & path("edit" / Segment / Segment) & userState & pathEnd) (behavior.editProject),
-              (get & path(Segment / Segment) & parameters(('artifact, 'version.?))) (behavior.projectPageArtifactQuery),
-              (get & path(Segment / Segment) & userState & pathEnd) (behavior.projectPage)
+              (get & path(Segment / Segment) & parameters(('artifact.?, 'version.?, 'target.?)) & userState) (behavior.projectPageArtifactQuery),
+              (get & path(Segment / Segment) & userState & pathEnd & parameter('target.?)) (behavior.projectPage)
             ),
             artifactRoutes(
-              (get & path(Segment / Segment / Segment) & userState) (behavior.artifactPage),
-              (get & path(Segment / Segment / Segment / Segment) & userState) (behavior.artifactPageWithVersion)
+              (get & path(Segment / Segment / Segment) & userState & parameter('target.?)) (behavior.artifactPage),
+              (get & path(Segment / Segment / Segment / Segment) & userState & parameter('target.?)) (behavior.artifactPageWithVersion)
             ),
             (get & path("search") & userState & parameters(('q, 'page.as[Int] ? 1, 'sort.?, 'you.?))) (behavior.searchResultsPage),
             (get & path(Segment) & userState) (behavior.organizationPage)
