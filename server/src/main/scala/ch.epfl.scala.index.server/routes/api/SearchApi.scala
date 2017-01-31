@@ -45,13 +45,13 @@ class SearchApi(dataRepository: DataRepository)(implicit val executionContext: E
      scalaNativeVersion.flatMap(SemanticVersion.parse)) match {
 
       case (Some("JVM"), Some(scalaVersion), _, _) =>
-        Some(ScalaTarget.scala(scalaVersion))
+        Some(ScalaTarget.scala(scalaVersion.binary))
 
       case (Some("JS"), Some(scalaVersion), Some(scalaJsVersion), _) =>
-        Some(ScalaTarget.scalaJs(scalaVersion, scalaJsVersion))
+        Some(ScalaTarget.scalaJs(scalaVersion.binary, scalaJsVersion.binary))
 
       case (Some("NATIVE"), Some(scalaVersion), _, Some(scalaNativeVersion)) =>
-        Some(ScalaTarget.scalaNative(scalaVersion, scalaNativeVersion))
+        Some(ScalaTarget.scalaNative(scalaVersion.binary, scalaNativeVersion.binary))
 
       case _ =>
         None
@@ -74,7 +74,7 @@ class SearchApi(dataRepository: DataRepository)(implicit val executionContext: E
     }
   }
 
-  def projectBehavior(organization: String, repository: String, targetType: Option[String], scalaVersion: Option[String], scalaJsVersion: Option[String], scalaNativeVersion: Option[String], artifact: Option[String]) = {
+  def projectBehavior(organization: String, repository: String,  artifact: Option[String], targetType: Option[String], scalaVersion: Option[String], scalaJsVersion: Option[String], scalaNativeVersion: Option[String]) = {
     val reference = Project.Reference(organization, repository)
 
     val scalaTarget =

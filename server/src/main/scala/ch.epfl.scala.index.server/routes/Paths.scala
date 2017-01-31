@@ -30,7 +30,7 @@ class Paths(userState: Directive1[Option[UserState]]) {
         ),
         apiRoutes(
           (apiPrefix & cors() & path("search") & get & parameters(('q, 'target, 'scalaVersion, 'scalaJsVersion.?, 'scalaNativeVersion.?, 'cli.as[Boolean] ? false))) (behavior.projectSearchApi),
-          (apiPrefix & cors() & path("project") & get & parameters(('organization, 'repository, 'target.?, 'scalaVersion.?, 'scalaJsVersion.?, 'scalaNativeVersion.?, 'artifact.?))) (behavior.releaseInfoApi),
+          (apiPrefix & cors() & path("project") & get & parameters(('organization, 'repository, 'artifact.?, 'target.?, 'scalaVersion.?, 'scalaJsVersion.?, 'scalaNativeVersion.?))) (behavior.releaseInfoApi),
           (apiPrefix & cors() & path("autocomplete") & get & parameter('q)) (behavior.autocomplete)
         ),
         Assets.routes,
