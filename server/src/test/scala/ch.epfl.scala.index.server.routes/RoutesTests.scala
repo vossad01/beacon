@@ -7,7 +7,6 @@ import akka.http.scaladsl.server.{Route, StandardRoute}
 import ch.epfl.scala.index.server.UserState
 import ch.epfl.scala.index.server.routes.spec2.SpecificationRouteTest
 
-
 object RouteTests extends org.specs2.mutable.Specification with SpecificationRouteTest {
   "routing of" >> {
 
@@ -17,11 +16,14 @@ object RouteTests extends org.specs2.mutable.Specification with SpecificationRou
       override val projectPage: (String, String, Option[UserState], Option[String]) => StandardRoute =
         (org, proj, usr, target) => complete(s"Project: $org/$proj")
 
-      override val artifactPageWithVersion: (String, String, String, String, Option[UserState], Option[String]) => StandardRoute =
+      override val artifactPageWithVersion: (String, String, String, String, Option[UserState],
+                                             Option[String]) => StandardRoute =
         (org, proj, art, ver, usr, target) => complete(s"Artifact: $org/$proj/$art/$ver")
 
-      override val versionBadge: (String, String, String, Option[String], Option[String], Option[String], Option[String], Option[Int]) => Route =
-        (org, proj, art, target, _, _, _, _) => complete(s"You earned a badge for $org/$proj/$art!")
+      override val versionBadge: (String, String, String, Option[String], Option[String],
+                                  Option[String], Option[String], Option[Int]) => Route =
+        (org, proj, art, target, _, _, _, _) =>
+          complete(s"You earned a badge for $org/$proj/$art!")
     }
 
     val baseUrl = "http://example.com"

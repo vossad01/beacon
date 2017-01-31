@@ -82,19 +82,23 @@ class SearchPages(dataRepository: DataRepository, session: GithubUserSession) {
 
   private val searchPath = "search"
 
-  def searchPageBehavior(user: Option[UserState], query: String, page: Int, sorting: Option[String], you: Option[String]): Route = {
+  def searchPageBehavior(user: Option[UserState],
+                         query: String,
+                         page: Int,
+                         sorting: Option[String],
+                         you: Option[String]): Route = {
     searchParams(user) { params =>
       search(params, user, searchPath)
     }
   }
 
   def organizationBehavior(organization: String, user: Option[UserState]): Route = {
-      searchParams(user) { params =>
-        search(
-          params.copy(queryString = s"${params.queryString} AND organization:$organization"),
-          user,
-          organization
-        )
+    searchParams(user) { params =>
+      search(
+        params.copy(queryString = s"${params.queryString} AND organization:$organization"),
+        user,
+        organization
+      )
     }
   }
 }

@@ -83,7 +83,18 @@ class ProjectPages(dataRepository: DataRepository, session: GithubUserSession) {
   }
 
   // TODO: The user argument not being used seems suspicious, suggests there may actually be no authentication on the update
-  def updateProjectBehavior(organization: String, repository: String, user: Option[UserState], fields: Seq[(String, String)], contributorsWanted: Boolean, keywords: Iterable[String], defaultArtifact: Option[String], defaultStableVersion: Boolean, deprecated: Boolean, artifactDeprecations: Iterable[String], cliArtifacts: Iterable[String], customScalaDoc: Option[String]) = {
+  def updateProjectBehavior(organization: String,
+                            repository: String,
+                            user: Option[UserState],
+                            fields: Seq[(String, String)],
+                            contributorsWanted: Boolean,
+                            keywords: Iterable[String],
+                            defaultArtifact: Option[String],
+                            defaultStableVersion: Boolean,
+                            deprecated: Boolean,
+                            artifactDeprecations: Iterable[String],
+                            cliArtifacts: Iterable[String],
+                            customScalaDoc: Option[String]) = {
     val documentationLinks = getDocumentationLinks(fields)
 
     onSuccess(
@@ -127,7 +138,12 @@ class ProjectPages(dataRepository: DataRepository, session: GithubUserSession) {
     documentationLinks
   }
 
-  def legacyArtifactQueryBehavior(organization: String, repository: String, artifact: Option[String], version: Option[String], target: Option[String], user: Option[UserState]) = {
+  def legacyArtifactQueryBehavior(organization: String,
+                                  repository: String,
+                                  artifact: Option[String],
+                                  version: Option[String],
+                                  target: Option[String],
+                                  user: Option[UserState]) = {
     val rest = (artifact, version) match {
       case (Some(a), Some(v)) => s"$a/$v"
       case (Some(a), None) => a
@@ -138,44 +154,39 @@ class ProjectPages(dataRepository: DataRepository, session: GithubUserSession) {
       case _ => ""
     }
     if (artifact.isEmpty && version.isEmpty) {
-      complete(
-        projectPage(organization, repository, target, None, None, user))
+      complete(projectPage(organization, repository, target, None, None, user))
     } else {
-      redirect(s"/$organization/$repository/$rest$targetQuery",
-        StatusCodes.PermanentRedirect)
+      redirect(s"/$organization/$repository/$rest$targetQuery", StatusCodes.PermanentRedirect)
     }
   }
 
-  def projectPageBehavior(organization: String, repository: String, user: Option[UserState], target: Option[String]) = {
+  def projectPageBehavior(organization: String,
+                          repository: String,
+                          user: Option[UserState],
+                          target: Option[String]) = {
     complete(
-      projectPage(organization,
-        repository,
-        target,
-        None,
-        None,
-        user)
+      projectPage(organization, repository, target, None, None, user)
     )
   }
 
-  def artifactPageBehavior(organization: String, repository: String, artifact: String, user: Option[UserState], target: Option[String]) = {
+  def artifactPageBehavior(organization: String,
+                           repository: String,
+                           artifact: String,
+                           user: Option[UserState],
+                           target: Option[String]) = {
     complete(
-      projectPage(organization,
-        repository,
-        target,
-        Some(artifact),
-        None,
-        user)
+      projectPage(organization, repository, target, Some(artifact), None, user)
     )
   }
 
-  def artifactWithVersionBehavior(organization: String, repository: String, artifact: String, version: String, user: Option[UserState], target: Option[String]) = {
+  def artifactWithVersionBehavior(organization: String,
+                                  repository: String,
+                                  artifact: String,
+                                  version: String,
+                                  user: Option[UserState],
+                                  target: Option[String]) = {
     complete(
-      projectPage(organization,
-        repository,
-        target,
-        Some(artifact),
-        Some(version),
-        user)
+      projectPage(organization, repository, target, Some(artifact), Some(version), user)
     )
   }
 }

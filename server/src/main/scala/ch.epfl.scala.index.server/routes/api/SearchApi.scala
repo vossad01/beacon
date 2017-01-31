@@ -60,21 +60,29 @@ class SearchApi(dataRepository: DataRepository)(implicit val executionContext: E
 
   def autocompleteBehavior(query: String) = {
     complete {
-      dataRepository.find(SearchParams(queryString = query, page = 1, sorting = None, total = 5)).map {
-        case (pagination, projects) =>
-          val summarisedProjects = projects.map(
-            p =>
-              Autocompletion(
-                p.organization,
-                p.repository,
-                p.github.flatMap(_.description).getOrElse("")
+      dataRepository
+        .find(SearchParams(queryString = query, page = 1, sorting = None, total = 5))
+        .map {
+          case (pagination, projects) =>
+            val summarisedProjects = projects.map(
+              p =>
+                Autocompletion(
+                  p.organization,
+                  p.repository,
+                  p.github.flatMap(_.description).getOrElse("")
               ))
-          write(summarisedProjects)
-      }
+            write(summarisedProjects)
+        }
     }
   }
 
-  def projectBehavior(organization: String, repository: String,  artifact: Option[String], targetType: Option[String], scalaVersion: Option[String], scalaJsVersion: Option[String], scalaNativeVersion: Option[String]) = {
+  def projectBehavior(organization: String,
+                      repository: String,
+                      artifact: Option[String],
+                      targetType: Option[String],
+                      scalaVersion: Option[String],
+                      scalaJsVersion: Option[String],
+                      scalaNativeVersion: Option[String]) = {
     val reference = Project.Reference(organization, repository)
 
     val scalaTarget =
@@ -103,12 +111,14 @@ class SearchApi(dataRepository: DataRepository)(implicit val executionContext: E
     })
   }
 
-  def searchBehavior(q: String, targetType: String, scalaVersion: String, scalaJsVersion: Option[String], scalaNativeVersion: Option[String], cli: Boolean) = {
+  def searchBehavior(q: String,
+                     targetType: String,
+                     scalaVersion: String,
+                     scalaJsVersion: Option[String],
+                     scalaNativeVersion: Option[String],
+                     cli: Boolean) = {
     val scalaTarget =
-      parseScalaTarget(Some(targetType),
-        Some(scalaVersion),
-        scalaJsVersion,
-        scalaNativeVersion)
+      parseScalaTarget(Some(targetType), Some(scalaVersion), scalaJsVersion, scalaNativeVersion)
 
     def convert(project: Project): Api.Project = {
       import project._
@@ -118,19 +128,20 @@ class SearchApi(dataRepository: DataRepository)(implicit val executionContext: E
         else artifacts
 
       Api.Project(organization,
-        repository,
-        project.github.flatMap(_.logo.map(_.target)),
-        artifacts0)
+                  repository,
+                  project.github.flatMap(_.logo.map(_.target)),
+                  artifacts0)
     }
 
     complete(
       scalaTarget match {
         case Some(target) =>
           (OK,
-            dataRepository
-              .find(SearchParams(queryString = q, targetFiltering = scalaTarget, cli = cli, total = 10))
-              .map { case (_, ps) => ps.map(p => convert(p)) }
-              .map(ps => write(ps)))
+           dataRepository
+             .find(
+               SearchParams(queryString = q, targetFiltering = scalaTarget, cli = cli, total = 10))
+             .map { case (_, ps) => ps.map(p => convert(p)) }
+             .map(ps => write(ps)))
         case None =>
           (BadRequest, s"something is wrong: $targetType $scalaVersion $scalaJsVersion")
       }

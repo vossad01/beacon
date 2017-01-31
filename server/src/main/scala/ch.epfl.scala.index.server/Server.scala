@@ -52,7 +52,8 @@ object Server {
     val paths: DataPaths = DataPaths(pathFromArgs)
 
     val facade = ScaladexFacade.createStandardFacade(data, session, github, paths)
-    val routes = new ch.epfl.scala.index.server.routes.Paths(githubUser(session)).buildRoutes(facade)
+    val routes =
+      new ch.epfl.scala.index.server.routes.Paths(githubUser(session)).buildRoutes(facade)
 
     println("waiting for elastic to start")
     blockUntilYellow()

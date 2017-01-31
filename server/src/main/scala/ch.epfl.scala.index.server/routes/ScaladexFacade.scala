@@ -12,15 +12,18 @@ import ch.epfl.scala.index.server.routes.api.{PublishApi, SearchApi}
 
 import scala.concurrent.ExecutionContext
 
-class ScaladexFacade(session: GithubUserSession,
-                     frontPageSource: FrontPage,
-                     projectPages: ProjectPages,
-                     searchPages: SearchPages,
-                     publishApi: PublishApi,
-                     searchApi: SearchApi,
-                     oAuth2: OAuth2,
-                     badges: Badges,
-                     override val credentialsTransformation: (Option[HttpCredentials]) => AuthenticationDirective[(GithubCredentials, UserState)]) extends HttpBehavior {
+class ScaladexFacade(
+    session: GithubUserSession,
+    frontPageSource: FrontPage,
+    projectPages: ProjectPages,
+    searchPages: SearchPages,
+    publishApi: PublishApi,
+    searchApi: SearchApi,
+    oAuth2: OAuth2,
+    badges: Badges,
+    override val credentialsTransformation: (Option[HttpCredentials]) => AuthenticationDirective[
+      (GithubCredentials, UserState)])
+    extends HttpBehavior {
 
   override val frontPage = frontPageSource.frontPageBehavior _
 
@@ -58,10 +61,15 @@ class ScaladexFacade(session: GithubUserSession,
 }
 
 object ScaladexFacade {
-  def createStandardFacade(data: DataRepository, session: GithubUserSession, github: Github, paths: DataPaths)
-                          (implicit system: ActorSystem, materializer: ActorMaterializer, executionContext: ExecutionContext): HttpBehavior = {
+  def createStandardFacade(data: DataRepository,
+                           session: GithubUserSession,
+                           github: Github,
+                           paths: DataPaths)(implicit system: ActorSystem,
+                                             materializer: ActorMaterializer,
+                                             executionContext: ExecutionContext): HttpBehavior = {
 
-    new ScaladexFacade(session,
+    new ScaladexFacade(
+      session,
       new FrontPage(data, session),
       new ProjectPages(data, session),
       new SearchPages(data, session),
@@ -70,7 +78,8 @@ object ScaladexFacade {
       new OAuth2(github, session),
       new Badges(data),
       (credentials: Option[HttpCredentials]) => {
-        authenticateBasicAsync(realm = "Scaladex Realm", GithubAuthenticator(github, credentials)(executionContext))
+        authenticateBasicAsync(realm = "Scaladex Realm",
+                               GithubAuthenticator(github, credentials)(executionContext))
       }
     )
   }

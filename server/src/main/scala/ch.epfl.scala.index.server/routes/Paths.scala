@@ -25,39 +25,61 @@ class Paths(userState: Directive1[Option[UserState]]) {
     val programmaticRoutes =
       concat(
         publishRoutes(
-          (get & publish & parameter('path)) (behavior.releaseStatus),
-          (put & publish & publishParameters & entity(as[String]) & extractCredentials.flatMap(behavior.credentialsTransformation)) (behavior.publishRelease)
+          (get & publish & parameter('path))(behavior.releaseStatus),
+          (put & publish & publishParameters & entity(as[String]) & extractCredentials.flatMap(
+            behavior.credentialsTransformation))(behavior.publishRelease)
         ),
         apiRoutes(
-          (apiPrefix & cors() & path("search") & get & parameters(('q, 'target, 'scalaVersion, 'scalaJsVersion.?, 'scalaNativeVersion.?, 'cli.as[Boolean] ? false))) (behavior.projectSearchApi),
-          (apiPrefix & cors() & path("project") & get & parameters(('organization, 'repository, 'artifact.?, 'target.?, 'scalaVersion.?, 'scalaJsVersion.?, 'scalaNativeVersion.?))) (behavior.releaseInfoApi),
-          (apiPrefix & cors() & path("autocomplete") & get & parameter('q)) (behavior.autocomplete)
+          (apiPrefix & cors() & path("search") & get & parameters(
+            ('q,
+             'target,
+             'scalaVersion,
+             'scalaJsVersion.?,
+             'scalaNativeVersion.?,
+             'cli.as[Boolean] ? false)))(behavior.projectSearchApi),
+          (apiPrefix & cors() & path("project") & get & parameters(
+            ('organization,
+             'repository,
+             'artifact.?,
+             'target.?,
+             'scalaVersion.?,
+             'scalaJsVersion.?,
+             'scalaNativeVersion.?)))(behavior.releaseInfoApi),
+          (apiPrefix & cors() & path("autocomplete") & get & parameter('q))(behavior.autocomplete)
         ),
         Assets.routes,
         badgeRoutes(
-          (get & path(Segment / Segment / Segment / "latest.svg") & parameter('target.?) & shieldsParameters) (behavior.versionBadge),
-          (get & path("count.svg") & parameter('q) & shieldsParameters & parameters('subject)) (behavior.countBadge)
+          (get & path(Segment / Segment / Segment / "latest.svg") & parameter('target.?) & shieldsParameters)(
+            behavior.versionBadge),
+          (get & path("count.svg") & parameter('q) & shieldsParameters & parameters('subject))(
+            behavior.countBadge)
         ),
         behavior.oAuth2routes
       )
 
     val userFacingRoutes =
       concat(
-        (pathSingleSlash & userState) (behavior.frontPage),
+        (pathSingleSlash & userState)(behavior.frontPage),
         redirectToNoTrailingSlashIfPresent(akka.http.scaladsl.model.StatusCodes.MovedPermanently) {
           concat(
             projectRoutes(
-              (post & path("edit" / Segment / Segment) & userState & pathEnd & formFieldSeq & editFormFields) (behavior.updateProject),
-              (get & path("edit" / Segment / Segment) & userState & pathEnd) (behavior.editProject),
-              (get & path(Segment / Segment) & parameters(('artifact.?, 'version.?, 'target.?)) & userState) (behavior.projectPageArtifactQuery),
-              (get & path(Segment / Segment) & userState & pathEnd & parameter('target.?)) (behavior.projectPage)
+              (post & path("edit" / Segment / Segment) & userState & pathEnd & formFieldSeq & editFormFields)(
+                behavior.updateProject),
+              (get & path("edit" / Segment / Segment) & userState & pathEnd)(behavior.editProject),
+              (get & path(Segment / Segment) & parameters(('artifact.?, 'version.?, 'target.?)) & userState)(
+                behavior.projectPageArtifactQuery),
+              (get & path(Segment / Segment) & userState & pathEnd & parameter('target.?))(
+                behavior.projectPage)
             ),
             artifactRoutes(
-              (get & path(Segment / Segment / Segment) & userState & parameter('target.?)) (behavior.artifactPage),
-              (get & path(Segment / Segment / Segment / Segment) & userState & parameter('target.?)) (behavior.artifactPageWithVersion)
+              (get & path(Segment / Segment / Segment) & userState & parameter('target.?))(
+                behavior.artifactPage),
+              (get & path(Segment / Segment / Segment / Segment) & userState & parameter(
+                'target.?))(behavior.artifactPageWithVersion)
             ),
-            (get & path("search") & userState & parameters(('q, 'page.as[Int] ? 1, 'sort.?, 'you.?))) (behavior.searchResultsPage),
-            (get & path(Segment) & userState) (behavior.organizationPage)
+            (get & path("search") & userState & parameters(
+              ('q, 'page.as[Int] ? 1, 'sort.?, 'you.?)))(behavior.searchResultsPage),
+            (get & path(Segment) & userState)(behavior.organizationPage)
           )
         }
       )
@@ -67,29 +89,30 @@ class Paths(userState: Directive1[Option[UserState]]) {
 
   private val shieldsParameters = parameters(('color.?, 'style.?, 'logo.?, 'logoWidth.as[Int].?))
 
-  private val editFormFields = formFields((
-    'contributorsWanted.as[Boolean] ? false,
-    'keywords.*,
-    'defaultArtifact.?,
-    'defaultStableVersion.as[Boolean] ? false,
-    'deprecated.as[Boolean] ? false,
-    'artifactDeprecations.*,
-    'cliArtifacts.*,
-    'customScalaDoc.?))
+  private val editFormFields = formFields(
+    ('contributorsWanted.as[Boolean] ? false,
+     'keywords.*,
+     'defaultArtifact.?,
+     'defaultStableVersion.as[Boolean] ? false,
+     'deprecated.as[Boolean] ? false,
+     'artifactDeprecations.*,
+     'cliArtifacts.*,
+     'customScalaDoc.?))
 
   private val DateTimeUn = Unmarshaller.strict[String, DateTime] { dateRaw =>
     new DateTime(dateRaw.toLong * 1000L)
   }
 
-  private val publishParameters = parameters((
-    'path,
-    'created.as(DateTimeUn) ? DateTime.now,
-    'readme.as[Boolean] ? true,
-    'contributors.as[Boolean] ? true,
-    'info.as[Boolean] ? true,
-    'keywords.as[String].*,
-    'test.as[Boolean] ? false
-  ))
+  private val publishParameters = parameters(
+    (
+      'path,
+      'created.as(DateTimeUn) ? DateTime.now,
+      'readme.as[Boolean] ? true,
+      'contributors.as[Boolean] ? true,
+      'info.as[Boolean] ? true,
+      'keywords.as[String].*,
+      'test.as[Boolean] ? false
+    ))
 
   private val publish = path("publish")
 

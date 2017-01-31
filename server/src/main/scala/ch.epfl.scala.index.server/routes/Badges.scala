@@ -42,7 +42,14 @@ class Badges(dataRepository: DataRepository) {
 
   }
 
-  def versionBadgeBehavior(organization: String, repository: String, artifact: String, target: Option[String], color: Option[String], style: Option[String], logo: Option[String], logoWidth: Option[Int]) = {
+  def versionBadgeBehavior(organization: String,
+                           repository: String,
+                           artifact: String,
+                           target: Option[String],
+                           color: Option[String],
+                           style: Option[String],
+                           logo: Option[String],
+                           logoWidth: Option[Int]) = {
     onSuccess(
       dataRepository.projectPage(
         Project.Reference(organization, repository),
@@ -56,23 +63,28 @@ class Badges(dataRepository: DataRepository) {
 
       case Some((_, options)) =>
         shieldsSvg(artifact,
-          options.release.reference.version.toString(),
-          color,
-          style,
-          logo,
-          logoWidth)
+                   options.release.reference.version.toString(),
+                   color,
+                   style,
+                   logo,
+                   logoWidth)
       case _ =>
         shieldsSvg(artifact,
-          "no published release",
-          color orElse Some("lightgrey"),
-          style,
-          logo,
-          logoWidth)
+                   "no published release",
+                   color orElse Some("lightgrey"),
+                   style,
+                   logo,
+                   logoWidth)
 
     }
   }
 
-  def countBadgeBehavior(query: String, color: Option[String], style: Option[String], logo: Option[String], logoWidth: Option[PageIndex], subject: String) = {
+  def countBadgeBehavior(query: String,
+                         color: Option[String],
+                         style: Option[String],
+                         logo: Option[String],
+                         logoWidth: Option[PageIndex],
+                         subject: String) = {
     onSuccess(dataRepository.total(query))(count =>
       shieldsSvg(subject, count.toString, color, style, logo, logoWidth))
   }

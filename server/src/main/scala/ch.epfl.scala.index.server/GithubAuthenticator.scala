@@ -7,7 +7,8 @@ import ch.epfl.scala.index.data.github.GithubCredentials
 
 import scala.concurrent.{ExecutionContext, Future}
 
-object GithubAuthenticator{
+object GithubAuthenticator {
+
   /**
     * verifying a login to github
     *
@@ -15,8 +16,9 @@ object GithubAuthenticator{
     * @param credentialsHeader the credentials
     * @return
     */
-  def apply(github: Github, credentialsHeader: Option[HttpCredentials])
-           (implicit executionContext: ExecutionContext): AsyncAuthenticator[(GithubCredentials, UserState)] = {
+  def apply(github: Github, credentialsHeader: Option[HttpCredentials])(
+      implicit executionContext: ExecutionContext)
+    : AsyncAuthenticator[(GithubCredentials, UserState)] = {
 
     // TODO: Is there anyway to use the provided credentials here?
     // Doing so would get rid of the awkward usage of needing to extract HttpCredentials ourselves and
